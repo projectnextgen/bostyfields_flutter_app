@@ -334,9 +334,6 @@ class __IntegerState extends State<_Integer> {
           productname = body['booking']['productname'];
           product = _currentIntValue;
         });
-
-        print(productname);
-
         message = json.encode(body['message']);
         ScaffoldMessenger.of(context)
             .showSnackBar(SnackBar(content: Text('$message')));
@@ -465,9 +462,6 @@ class __DateTimeUpdateState extends State<_DateTimeUpdate> {
         datetime = DateTime.tryParse(editbooking['datetime']);
         bookingdate = values[0];
         bookingtime = values[1];
-        print(datetime);
-        print(bookingdate);
-        print(bookingtime);
       });
     }
     this.setState(() {
@@ -495,8 +489,6 @@ class __DateTimeUpdateState extends State<_DateTimeUpdate> {
         datetime = DateTime.tryParse(editbooking['datetime']);
         bookingdate = values[0];
         bookingtime = values[1];
-        print(datetime);
-        print(bookingdate);
       });
       var data = {
         'bookingid': bookingid,
@@ -511,7 +503,6 @@ class __DateTimeUpdateState extends State<_DateTimeUpdate> {
         setState(() {
           bookingid = body['booking']['id'];
         });
-        print(bookingid);
         message = json.encode(body['message']);
         ScaffoldMessenger.of(context)
             .showSnackBar(SnackBar(content: Text('$message')));
@@ -538,12 +529,10 @@ class __DateTimeUpdateState extends State<_DateTimeUpdate> {
         };
         var res = await Network().bookingData(data, '/deletebooking');
         var body = json.decode(res.body);
-        print(body);
         messagecheck = body['refund'] as bool;
         if(messagecheck==true){
           message = json.encode(body['message']);
           localStorage.setString('refundmessage', message!);
-          print(message);
         }
     }
     Navigator.push(
@@ -581,7 +570,6 @@ class __DateTimeUpdateState extends State<_DateTimeUpdate> {
                           setState(() {
                             _selectedDate = DateFormat("yyyy-MM-dd").format(date);
                             bookingdate = _selectedDate;
-                            print(_selectedDate);
                           });
                         }, currentTime: datetime, locale: LocaleType.en),
                     child: Card(
@@ -617,7 +605,6 @@ class __DateTimeUpdateState extends State<_DateTimeUpdate> {
                           setState(() {
                             _selectedTime = DateFormat("HH:mm:ss").format(date);
                             bookingtime = _selectedTime;
-                            print(_selectedTime);
                           });
                         }, pickerModel: CustomPicker(currentTime: datetime, locale: LocaleType.en)),
                     child: Card(

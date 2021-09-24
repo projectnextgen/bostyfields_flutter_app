@@ -40,7 +40,6 @@ class _RegisterState extends State<Register> {
   void initState(){
     super.initState();
     Firebase.initializeApp().whenComplete(() {
-      print("completed");
       setState(() {});
     });
   }
@@ -312,7 +311,6 @@ class _RegisterState extends State<Register> {
 
     var res = await Network().authData(data, '/register');
     var body = json.decode(res.body);
-    print(body);
     if(body['success']==true){
       SharedPreferences localStorage = await SharedPreferences.getInstance();
       localStorage.setString('access_token', json.encode(body['access_token']));

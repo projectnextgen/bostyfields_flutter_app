@@ -10,23 +10,17 @@ import 'package:bostyfield_app/screen/success.dart';
 import 'package:bostyfield_app/screen/home.dart';
 import 'package:bostyfield_app/screen/login.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' ;
 import 'package:flutter/services.dart';
-import 'package:flutter_stripe/flutter_stripe.dart';
+import 'package:flutter_stripe/flutter_stripe.dart' hide Card;
 import 'package:bostyfield_app/.env.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:bostyfield_app/.env.dart';
 
 void main() {
-  WidgetsFlutterBinding.ensureInitialized(); //imp line need to be added first
+  WidgetsFlutterBinding.ensureInitialized();
   FlutterError.onError = (FlutterErrorDetails details) {
-    //this line prints the default flutter gesture caught exception in console
-    //FlutterError.dumpErrorToConsole(details);
-    print("Error From INSIDE FRAME_WORK");
-    print("----------------------");
-    print("Error :  ${details.exception}");
-    print("StackTrace :  ${details.stack}");
   };
   runApp(new PaymentScreen());
 }
@@ -46,11 +40,24 @@ class PaymentScreenState extends State<PaymentScreen>{
   String? productname;
   String? datetime;
   String? message;
+  var carddata;
+  var savedcards;
+  var savedcardid;
+  var savedcardbrand;
+  var savedcardlast4;
+  var savedcardfunding;
+  var expMonth;
+  var expYear;
   var paymentMethod;
   var booking;
   var data;
   var user;
   var error;
+  var paymentid;
+  var last4digits;
+  bool agree = false;
+  bool savedcard = false;
+  var outstandingamount = "";
   var _enabled = true;
   var paymentIntent;
   CardDetails _card = CardDetails();
@@ -59,22 +66,29 @@ class PaymentScreenState extends State<PaymentScreen>{
     setState(() {
       _isLoading = true;
     });
+
     SharedPreferences localStorage = await SharedPreferences.getInstance();
+
     user = jsonDecode(localStorage.getString('user')!);
     booking = jsonDecode(localStorage.getString('booking')!);
+    savedcards = jsonDecode(localStorage.getString('savedcards')!);
+
     var messagecheck = localStorage.getString('outstandingamount');
-    if(messagecheck != null) {
-      var message = localStorage.getString('outstandingamount')!;
-      _showMsg(message);
+
+    if(messagecheck != null){
+      var message = jsonDecode(localStorage.getString('outstandingamount')!);
+      outstandingamount = message;
       localStorage.remove('outstandingamount');
     }
-    if(user != null) {
+
+    if(user != null){
       setState(() {
         name = user['firstname'];
         email = user['email'];
       });
     }
-    if(booking != null) {
+
+    if(booking != null){
       setState(() {
         bookingid = booking['id'];
         fieldname = booking['fieldname'];
@@ -83,9 +97,23 @@ class PaymentScreenState extends State<PaymentScreen>{
         amount = booking['amount'];
       });
     }
+
+    if(savedcards != null){
+      setState(() {
+        savedcardid = savedcards[0]['id'];
+        savedcardbrand = savedcards[0]['card']['brand'];
+        savedcardlast4 = savedcards[0]['card']['last4'];
+        expMonth = savedcards[0]['card']['exp_month'];
+        expYear = savedcards[0]['card']['exp_year'];
+        savedcardfunding = savedcards[0]['card']['funding'];
+        savedcard = true;
+      });
+    }
+
     setState(() {
       _isLoading = false;
     });
+
     return "Success!";
   }
   GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey();
@@ -204,208 +232,223 @@ class PaymentScreenState extends State<PaymentScreen>{
         ),
       ),
 
-      body: _isLoading ? Center(child: CircularProgressIndicator(valueColor:AlwaysStoppedAnimation<Color>(Colors.green[600]!))) : Column(
-        children: [
-          Container(
-              margin: const EdgeInsets.only(top: 15, bottom:5.0),
-              padding: const EdgeInsets.all(5.0),
-              child: Column(
-                children: [
-                  Text(
-                    name ?? "Name", textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: Colors.black45,
-                      fontSize:18.0,
-                      fontWeight: FontWeight.bold,
-                      height: 1.2,
-                    ),
-                  ),
-                  Text(
-                    email ?? "Email", textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: Colors.black45,
-                      fontSize:18.0,
-                      fontWeight: FontWeight.bold,
-                      height: 1.2,
-                    ),
-                  ),
-                ],
-              )
-          ),
-          Container(
-              margin: const EdgeInsets.all(5.0),
-              padding: const EdgeInsets.all(5.0),
-              child: Column(
-                children: [
-                  Text(
-                    fieldname ?? "Field Name", textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: Colors.black45,
-                      fontSize:18.0,
-                      fontWeight: FontWeight.bold,
-                      height: 1.2,
-                    ),
-                  ),
-                  Text(
-                    productname ?? "Product Name", textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: Colors.black45,
-                      fontSize:18.0,
-                      fontWeight: FontWeight.bold,
-                      height: 1.2,
-                    ),
-                  ),
-                  Text(
-                    datetime ?? "Date & Time", textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: Colors.black45,
-                      fontSize:18.0,
-                      fontWeight: FontWeight.bold,
-                      height: 1.2,
-                    ),
-                  ),
-                  Text(
-                    "£ $amount", textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: Colors.black45,
-                      fontSize:18.0,
-                      fontWeight: FontWeight.bold,
-                      height: 1.2,
-                    ),
-                  ),
-                ],
-              ),
-          ),
-          Padding(
-            padding: EdgeInsets.all(16),
-            child: Form(
-            key: _formKey,
-              child: Column(
-                children: <Widget>[
-                  Row(
-                    children: [
-                      Expanded(
-                        flex: 2,
-                        child: TextFormField(
-                          maxLength: 16,
-                          maxLengthEnforcement: MaxLengthEnforcement.enforced,
-                          decoration: InputDecoration(hintText: 'Card Number'),
-                          onChanged: (number) {
-                            setState(() {
-                              _card = _card.copyWith(number: number);
-                            });
-                          },
-                          keyboardType: TextInputType.number,
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Required';
-                            }
-                            return null;
-                          },
-                        ),
+      body: _isLoading ? Center(child: CircularProgressIndicator(valueColor:AlwaysStoppedAnimation<Color>(Colors.green[600]!))) : SingleChildScrollView(child: Column(
+          children: [
+            Container(
+                margin: const EdgeInsets.only(top: 15, bottom:5.0),
+                padding: const EdgeInsets.all(5.0),
+                child: Column(
+                  children: [
+                    Text(
+                      name ?? "Name", textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Colors.black45,
+                        fontSize:18.0,
+                        fontWeight: FontWeight.bold,
+                        height: 1.2,
                       ),
-                    ]
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 4),
-                        width: 80,
-                        child: TextFormField(
-                          maxLength: 2,
-                          maxLengthEnforcement: MaxLengthEnforcement.enforced,
-                          decoration: InputDecoration(hintText: 'Exp. Mth'),
-                          onChanged: (number) {
-                            setState(() {
-                              _card = _card.copyWith(
-                                  expirationMonth: int.tryParse(number));
-                            });
-                          },
-                          keyboardType: TextInputType.number,
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Required';
-                            }
-                              return null;
-                          },
-                        ),
+                    ),
+                    Text(
+                      email ?? "Email", textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Colors.black45,
+                        fontSize:18.0,
+                        fontWeight: FontWeight.bold,
+                        height: 1.2,
                       ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 4),
-                        width: 80,
-                        child: TextFormField(
-                          maxLength: 2,
-                          maxLengthEnforcement: MaxLengthEnforcement.enforced,
-                          decoration: InputDecoration(hintText: 'Exp. Year'),
-                          onChanged: (number) {
-                            setState(() {
-                              _card = _card.copyWith(
-                                  expirationYear: int.tryParse(number));
-                            });
-                          },
-                          keyboardType: TextInputType.number,
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Required';
-                            }
-                            return null;
-                          },
-                        ),
+                    ),
+                  ],
+                )
+            ),
+            Container(
+                margin: const EdgeInsets.all(5.0),
+                padding: const EdgeInsets.all(5.0),
+                child: Column(
+                  children: [
+                    Text(
+                      fieldname ?? "Field Name", textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Colors.black45,
+                        fontSize:18.0,
+                        fontWeight: FontWeight.bold,
+                        height: 1.2,
                       ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 4),
-                        width: 80,
-                        child: TextFormField(
-                          maxLength: 3,
-                          maxLengthEnforcement: MaxLengthEnforcement.enforced,
-                          decoration: InputDecoration(hintText: 'CVC'),
-                          onChanged: (number) {
-                            setState(() {
-                              _card = _card.copyWith(cvc: number);
-                            });
-                          },
-                          keyboardType: TextInputType.number,
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Required';
-                            }
-                            return null;
+                    ),
+                    Text(
+                      productname ?? "Product Name", textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Colors.black45,
+                        fontSize:18.0,
+                        fontWeight: FontWeight.bold,
+                        height: 1.2,
+                      ),
+                    ),
+                    Text(
+                      datetime ?? "Date & Time", textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Colors.black45,
+                        fontSize:18.0,
+                        fontWeight: FontWeight.bold,
+                        height: 1.2,
+                      ),
+                    ),
+                    Text(
+                      "£ $amount $outstandingamount", textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Colors.black45,
+                        fontSize:18.0,
+                        fontWeight: FontWeight.bold,
+                        height: 1.2,
+                      ),
+                    ),
+                  ],
+                ),
+            ),
+            Padding(
+              padding: EdgeInsets.all(16),
+              child: Form(
+              key: _formKey,
+                child: Column(
+                  children: <Widget>[
+                    Row(
+                      children: [
+                        Expanded(
+                          flex: 2,
+                          child: TextFormField(
+                            maxLength: 16,
+                            maxLengthEnforcement: MaxLengthEnforcement.enforced,
+                            decoration: InputDecoration(hintText: 'Card Number'),
+                            onChanged: (number) {
+                              setState(() {
+                                _card = _card.copyWith(number: number);
+                              });
                             },
+                            keyboardType: TextInputType.number,
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'Required';
+                              }
+                              return null;
+                            },
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                  Padding(
-                    padding: EdgeInsets.all(10),
-                    child:
-                    GestureDetector(
-                      onTap: () => {
-                        setState(() {
-                        _isLoading = true;
-                        }),
-                        if (_formKey.currentState!.validate()) {
-                          handlePayPress(),
-                        }else{
-                          setState(() {
-                            _isLoading = false;
-                          }),
-                        },
-                      },
-                      child: Container(
-                        decoration: BoxDecoration(color: Colors.green[600],
-                        borderRadius: BorderRadius.all(Radius.circular(5))),
-                        margin: EdgeInsets.only(top: 25, left: 30, right: 30),
-                        child:
-                        Center(child:Container(
-                          padding: EdgeInsets.fromLTRB(10, 10, 10, 10),
+                      ]
+                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 4),
+                          width: 80,
+                          child: TextFormField(
+                            maxLength: 2,
+                            maxLengthEnforcement: MaxLengthEnforcement.enforced,
+                            decoration: InputDecoration(hintText: 'Exp. Mth'),
+                            onChanged: (number) {
+                              setState(() {
+                                _card = _card.copyWith(
+                                    expirationMonth: int.tryParse(number));
+                              });
+                            },
+                            keyboardType: TextInputType.number,
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'Required';
+                              }
+                                return null;
+                            },
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 4),
+                          width: 80,
+                          child: TextFormField(
+                            maxLength: 2,
+                            maxLengthEnforcement: MaxLengthEnforcement.enforced,
+                            decoration: InputDecoration(hintText: 'Exp. Year'),
+                            onChanged: (number) {
+                              setState(() {
+                                _card = _card.copyWith(
+                                    expirationYear: int.tryParse(number));
+                              });
+                            },
+                            keyboardType: TextInputType.number,
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'Required';
+                              }
+                              return null;
+                            },
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 4),
+                          width: 80,
+                          child: TextFormField(
+                            maxLength: 3,
+                            maxLengthEnforcement: MaxLengthEnforcement.enforced,
+                            decoration: InputDecoration(hintText: 'CVC'),
+                            onChanged: (number) {
+                              setState(() {
+                                _card = _card.copyWith(cvc: number);
+                              });
+                            },
+                            keyboardType: TextInputType.number,
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'Required';
+                              }
+                              return null;
+                              },
+                          ),
+                        ),
+                      ],
+                    ),
+                    Row(
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.only(top: 5, right:5),
+                          child: Checkbox(
+                            checkColor: Colors.white,
+                            activeColor: Colors.green,
+                            value: agree,
+                            onChanged: (value) {
+                              setState(() {
+                                agree = value!;
+                              });
+                            },
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.only(top: 5),
+                          child: InkWell(
+                            child: Text(
+                              'Save Card',
+                              style: TextStyle(
+                                color: Colors.grey,
+                                fontSize: 15.0,
+                                decoration: TextDecoration.none,
+                                fontWeight: FontWeight.normal,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    savedcard ? Card(
+                      child: Column(
+                      children: [
+                        Container(
+                          margin: const EdgeInsets.only(top: 15, bottom:5.0),
+                          padding: const EdgeInsets.all(5.0),
                           child: Column(
-                            children: <Widget>[
+                            children: [
                               Text(
-                                _isLoading ? "Processing" : "Pay" , textAlign: TextAlign.center,
+                                "Saved Cards", textAlign: TextAlign.center,
                                 style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 20.0,
+                                  color: Colors.black45,
+                                  fontSize:18.0,
                                   fontWeight: FontWeight.bold,
                                   height: 1.2,
                                 ),
@@ -413,20 +456,97 @@ class PaymentScreenState extends State<PaymentScreen>{
                             ],
                           ),
                         ),
+                        Padding(
+                          padding: EdgeInsets.all(10),
+                          child:
+                          GestureDetector(
+                            onTap: () => {
+                              setState(() {
+                                _isLoading = true;
+                              }),
+                              handlePayPress(savedcard),
+                            },
+                            child: Container(
+                              decoration: BoxDecoration(color: Colors.green[600],
+                                  borderRadius: BorderRadius.all(Radius.circular(5))),
+                              margin: EdgeInsets.only(left: 30, right: 30, bottom: 20),
+                              child:
+                              Center(child:Container(
+                                margin: const EdgeInsets.only(top: 5.0, bottom:5.0),
+                                padding: const EdgeInsets.all(5.0),
+                                child: Column(
+                                  children: [
+                                    Text(
+                                      "$savedcardbrand $savedcardlast4 $expMonth/$expYear", textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize:18.0,
+                                        fontWeight: FontWeight.bold,
+                                        height: 1.2,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                      ),
+                    ) : Divider(),
+                    Padding(
+                      padding: EdgeInsets.all(10),
+                      child:
+                      GestureDetector(
+                        onTap: () => {
+                          setState(() {
+                          _isLoading = true;
+                          savedcard = false;
+                          }),
+                          if (_formKey.currentState!.validate()) {
+                            handlePayPress(savedcard),
+                          }else{
+                            setState(() {
+                              _isLoading = false;
+                            }),
+                          },
+                        },
+                        child: Container(
+                          decoration: BoxDecoration(color: Colors.green[600],
+                          borderRadius: BorderRadius.all(Radius.circular(5))),
+                          margin: EdgeInsets.only(top: 25, left: 30, right: 30),
+                          child: Center(child:Container(
+                            padding: EdgeInsets.fromLTRB(10, 10, 10, 10),
+                            child: Column(
+                              children: <Widget>[
+                                Text(
+                                  _isLoading ? "Processing" : "Pay" , textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 20.0,
+                                    fontWeight: FontWeight.bold,
+                                    height: 1.2,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                  Row(
-                    children: [
-                        Expanded(child: Image.asset("assets/images/acceptedcards.png")),
-                      ],
-                  ),
-                ],
+                    Row(
+                      children: [
+                          Expanded(child: Image.asset("assets/images/acceptedcards.png")),
+                        ],
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -437,40 +557,64 @@ class PaymentScreenState extends State<PaymentScreen>{
       _isLoading = false;
     });
   }
-  Future<void> handlePayPress() async {
-
-    await Stripe.instance.dangerouslyUpdateCardDetails(_card);
-
-    try {
-      Stripe.publishableKey = stripePublishableKey;
-      final paymentMethod =
-      await Stripe.instance.createPaymentMethod(PaymentMethodParams.card(
-      ));
-      paymentIntent = confirmIntent(paymentMethod);
-      print(paymentIntent);
+  Future<void> handlePayPress(savedcard) async {
+    if(savedcard){
+      confirmIntent("No Payment Method Required", savedcardid);
       return;
-    } on StripeException catch (e) {
-      message = e.error.message.toString();
-      error = e.error.stripeErrorCode.toString();
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('Error: $message')));
-      setState(() {
-        _isLoading = false;
-      });
-      return error;
+    }else {
+
+      await Stripe.instance.dangerouslyUpdateCardDetails(_card);
+
+      try {
+        Stripe.publishableKey = stripePublishableKey;
+        final paymentMethod =
+        await Stripe.instance.createPaymentMethod(PaymentMethodParams.card(
+        ));
+        paymentIntent = confirmIntent(paymentMethod, 'No Card Id');
+        return;
+      } on StripeException catch (e) {
+        message = e.error.message.toString();
+        error = e.error.stripeErrorCode.toString();
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Error: $message')));
+        setState(() {
+          _isLoading = false;
+        });
+        return error;
+      }
     }
   }
-  Future<void> confirmIntent(paymentMethod) async {
-    print(paymentMethod.id);
-    var data = {
-      'id': paymentMethod.id,
-      'bookingid': bookingid,
-      'amount': amount,
-    };
+  Future<void> confirmIntent(paymentMethod, savedcardid) async {
+    if(savedcardid != 'No Card Id') {
+      data = {
+        'cardid': savedcardid,
+        'brand': savedcardbrand,
+        'funding': savedcardfunding,
+        'last4': savedcardlast4,
+        'expMonth': expMonth,
+        'expYear': expYear,
+        'bookingid': bookingid,
+        'amount': amount,
+        'storedcard': true,
+        'savecard': false,
+      };
+    }else{
+      data = {
+        'cardid': paymentMethod.id,
+        'brand': paymentMethod.card.brand,
+        'funding': paymentMethod.card.funding,
+        'last4': paymentMethod.card.last4,
+        'expMonth': paymentMethod.card.expMonth,
+        'expYear': paymentMethod.card.expYear,
+        'bookingid': bookingid,
+        'amount': amount,
+        'storedcard': false,
+        'savecard': agree,
+      };
+    }
     var res = await Network().sendPayment(data, '/payment');
     var result = json.decode(res.body);
     if (result['success'] == true) {
-      print(result);
       SharedPreferences localStorage = await SharedPreferences.getInstance();
       localStorage.setString('booking', json.encode(result['booking']));
       Navigator.push(
@@ -481,7 +625,6 @@ class PaymentScreenState extends State<PaymentScreen>{
       );
     }
     if (result['success'] == false){
-      print(result);
       error = result['error'];
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text('Error: $error')));

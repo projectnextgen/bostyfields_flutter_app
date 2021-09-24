@@ -59,7 +59,6 @@ class _NextAvailableState extends State<NextAvailable>{
 
     this.setState(() {
       data = jsonDecode(decodefieldlist);
-      print(data);
     });
 
     if(data.length == 0){
@@ -291,10 +290,8 @@ void _selection(selectedfield, selecteddate) async{
 
     selectedfield = selectedfield+1;
     selectedfield = "$selectedfield";
-    print(selectedfield);
 
     selecteddate = "$selecteddate";
-    print(selecteddate);
 
     SharedPreferences localStorage = await SharedPreferences.getInstance();
     localStorage.setString('selectedfield', selectedfield);
@@ -304,8 +301,6 @@ void _selection(selectedfield, selecteddate) async{
     var res = await Network().getPostData("/bookings/"+selectedfield+"/"+selecteddate!);
     var times = json.decode(res.body);
     var entimes = json.encode(res.body);
-
-    print(entimes);
 
     localStorage.setString("times", entimes);
 

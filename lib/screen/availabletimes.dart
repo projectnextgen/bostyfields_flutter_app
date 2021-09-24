@@ -11,6 +11,7 @@ import 'package:bostyfield_app/screen/payment.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_datetime_picker/flutter_datetime_picker.dart';
 import 'package:back_button_interceptor/back_button_interceptor.dart';
 import 'package:http/http.dart' as http;
@@ -25,10 +26,9 @@ class AvailableTimes extends StatefulWidget {
 }
 
 class AvailableTimesState extends State<AvailableTimes> {
-
-  var field;  bool _isLoading = false;
+  var field;
+  bool _isLoading = false;
   final _scaffoldKey = GlobalKey<ScaffoldState>();
-
   var userid;
   var name;
   var date;
@@ -77,7 +77,6 @@ class AvailableTimesState extends State<AvailableTimes> {
     };
     this.setState(() {
       data = jsonDecode(decodegettimes);
-      print(data);
     });
     if(data.length == 0){
       results = 0;
@@ -351,13 +350,16 @@ class AvailableTimesState extends State<AvailableTimes> {
     var res = await Network().bookingData(data, '/booking');
     var body = json.decode(res.body);
     var outstandingamount = body['outstandingamount'];
+
     if(outstandingamount==true){
       var message = json.encode(body['message']);
       localStorage.setString('outstandingamount', message);
-      print(message);
     }
 
+    localStorage.setString('savedcards', json.encode(body['customer']));
+
     localStorage.setString('booking', json.encode(body['booking']));
+
     Navigator.push(
         context,
         MaterialPageRoute(builder: (context)=>PaymentScreen()));

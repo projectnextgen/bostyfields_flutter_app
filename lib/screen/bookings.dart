@@ -27,11 +27,9 @@ class _BookingsState extends State<Bookings> {
     });
     var res = await Network().userbookings('/userbookings');
     var body = json.encode(res.body);
-    print(body);
     this.setState(() {
       data = json.decode(body);
       data = json.decode(data);
-      print(data);
     });
     if(data.length == 0){
       results = 0;
@@ -276,10 +274,8 @@ class _BookingsState extends State<Bookings> {
     var data = {
       'bookingid' : id,
     };
-    print(data);
     var res = await Network().userbooking(data, '/userbooking');
     var body = json.encode(res.body);
-    print(body);
     SharedPreferences localStorage = await SharedPreferences.getInstance();
     localStorage.setString('editbooking', body);
 

@@ -53,7 +53,6 @@ class _HomeState extends State<Home>{
       decodeservicelist = json.decode(servicelist!);
       this.setState(() {
         data = jsonDecode(decodeservicelist);
-        print(data);
       });
       if(data.length == 0){
         results = 0;
@@ -243,7 +242,6 @@ class _HomeState extends State<Home>{
     var res = await Network().getPostData("/nextbookings");
     var fields = json.encode(res.body);
     localStorage.setString("fields", fields);
-    print(fields);
     Navigator.push(
       context,
       new MaterialPageRoute(

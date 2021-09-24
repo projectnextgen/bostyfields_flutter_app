@@ -49,7 +49,6 @@ class _LoginState extends State<Login> {
   void initState(){
     super.initState();
     Firebase.initializeApp().whenComplete(() {
-      print("completed");
       setState(() {});
     });
     _startLoading();
@@ -207,8 +206,6 @@ class _LoginState extends State<Login> {
 
     token = await FirebaseMessaging.instance.getToken();
 
-    print(token);
-
     var data = {
       'email' : email,
       'password' : password,
@@ -217,7 +214,6 @@ class _LoginState extends State<Login> {
 
     var res = await Network().authData(data, '/login');
     var body = json.decode(res.body);
-    print(body);
     if(body['success']==true){
       SharedPreferences localStorage = await SharedPreferences.getInstance();
       localStorage.setString('access_token', json.encode(body['access_token']));
@@ -230,7 +226,6 @@ class _LoginState extends State<Login> {
           ),
       );
     }else{
-      print(body['message']);
       _showMsg(body['message']);
     }
 

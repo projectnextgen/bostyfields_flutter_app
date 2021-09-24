@@ -35,7 +35,6 @@ class _FieldAccessState extends State<FieldAccess> {
     this.setState(() {
       data = json.decode(body);
       data = json.decode(data);
-      print(data);
     });
     if(data.length == 0){
       results = 0;
