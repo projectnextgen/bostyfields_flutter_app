@@ -79,6 +79,7 @@ class PaymentScreenState extends State<PaymentScreen>{
     if(messagecheck != null){
       var outstandingmessage = jsonDecode(localStorage.getString('outstandingamount')!);
       outstandingamount = outstandingmessage;
+      print(outstandingamount);
       localStorage.remove('outstandingamount');
     }
 
@@ -516,7 +517,7 @@ class PaymentScreenState extends State<PaymentScreen>{
                         child: Container(
                           decoration: BoxDecoration(color: Colors.green[600],
                           borderRadius: BorderRadius.all(Radius.circular(5))),
-                          margin: EdgeInsets.only(top: 20, left: 30, right: 30),
+                          margin: EdgeInsets.only(top: 25, left: 30, right: 30),
                           child: Center(child:Container(
                             padding: EdgeInsets.fromLTRB(10, 10, 10, 10),
                             child: Column(
@@ -626,6 +627,7 @@ class PaymentScreenState extends State<PaymentScreen>{
       );
     }
     if (result['success'] == false){
+      print(result);
       error = result['error'];
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text('Error: $error')));

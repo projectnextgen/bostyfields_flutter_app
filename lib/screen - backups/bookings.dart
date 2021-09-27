@@ -64,26 +64,18 @@ class _BookingsState extends State<Bookings> {
 
   _loadUserData() async{
     SharedPreferences localStorage = await SharedPreferences.getInstance();
-    if(localStorage.getString('user') == null) {
-      return Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context)=>Login()));
-    }else{
-      var user = jsonDecode(localStorage.getString('user')!);
-      var message = localStorage.getString('refundmessage');
-      if(user != null) {
-        setState(() {
-          name = user['firstname'];
-        });
-      }
-      if(message != null) {
-        var message = localStorage.getString('refundmessage')!;
-        _showMsg(message);
-        localStorage.remove('refundmessage');
-      }
-
+    var user = jsonDecode(localStorage.getString('user')!);
+    var message = localStorage.getString('refundmessage');
+    if(user != null) {
+      setState(() {
+        name = user['firstname'];
+      });
     }
-
+    if(message != null) {
+      var message = localStorage.getString('refundmessage')!;
+      _showMsg(message);
+      localStorage.remove('refundmessage');
+    }
   }
 
   @override
@@ -282,7 +274,7 @@ class _BookingsState extends State<Bookings> {
     var data = {
       'bookingid' : id,
     };
-    var res = await Network().userbooking(data, context, '/userbooking');
+    var res = await Network().userbooking(data,context, '/userbooking');
     var body = json.encode(res.body);
     SharedPreferences localStorage = await SharedPreferences.getInstance();
     localStorage.setString('editbooking', body);

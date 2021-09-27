@@ -318,17 +318,7 @@ class AvailableTimesState extends State<AvailableTimes> {
     Navigator.push(
         context,
         MaterialPageRoute(builder: (context)=>AvailableTimes()));
-
-    Timer(Duration(seconds: 3), () {
-      setState(() {
-        _isLoading = false;
-      });
-    });
-
   }
-
-
-
   Future<void> _order(time) async{
     setState(() {
       _isLoading = true;
@@ -349,6 +339,7 @@ class AvailableTimesState extends State<AvailableTimes> {
 
     var res = await Network().bookingData(data, context, '/booking');
     var body = json.decode(res.body);
+    print(body);
     var outstandingamount = body['outstandingamount'];
 
     if(outstandingamount==true){
